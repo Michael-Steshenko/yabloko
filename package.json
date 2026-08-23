@@ -1,0 +1,13 @@
+{
+  "name": "yabloko",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Apple Music desktop wrapper with a loopback HTTP control server",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "github:castlabs/electron-releases#v43.2.0+wvcus"
+  }
+}
