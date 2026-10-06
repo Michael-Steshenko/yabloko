@@ -81,9 +81,11 @@ Requires WSL2 with WSLg (WSL1 cannot run GUI apps). `npm install` must be run se
 inside WSL — CastLabs Electron downloads platform-specific binaries, so `node_modules`
 isn't portable across host/WSL.
 
-If a bare Ubuntu WSL distro fails to launch Electron at all, install:
-`libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgbm1 libasound2 libgtk-3-0
-libxshmfence1`. If the sandbox refuses to start, that's a restricted user-namespace
+If a bare WSL distro fails to launch Electron at all, install the required base display and audio libraries:
+- **Arch Linux:** `sudo pacman -S gtk3 mesa nss pulseaudio-alsa`
+- **Ubuntu / Debian:** `sudo apt install libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgbm1 libasound2 libgtk-3-0 libxshmfence1`
+
+If the sandbox refuses to start, that's a restricted user-namespace
 setting; `--no-sandbox` is a diagnostic, not a fix. `--disable-gpu` narrows down GPU
 rendering issues.
 
