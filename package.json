@@ -8,6 +8,6 @@
     "start": "electron ."
   },
   "dependencies": {
-    "electron": "github:castlabs/electron-releases#v43.2.0+wvcus"
+    "electron": "github:castlabs/electron-releases#v43.7.7+wvcus"
   }
 }
