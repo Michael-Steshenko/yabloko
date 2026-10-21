@@ -4,8 +4,8 @@ Apple Music desktop wrapper (Electron, wrapping `music.apple.com`) with a loopba
 control server for hotkey-driven favorite / suggest-less actions that never steal focus
 from whatever app you're using.
 
-Targets: **Linux** natively, **Windows** via WSL2 + WSLg. No VMP signing anywhere — see
-"Platform notes" below.
+Targets: **Linux** natively, **Windows** natively (castlabs EVS VMP-signed), or Windows via
+WSL2 + WSLg. See "Platform notes" below.
 
 ## Running
 
@@ -13,6 +13,12 @@ Targets: **Linux** natively, **Windows** via WSL2 + WSLg. No VMP signing anywher
 npm install
 npm start
 ```
+
+On native Windows, VMP-sign the dev Electron once before `npm start` (see "Native
+Windows" below): `npm run sign:dev`.
+
+If `node_modules/electron/dist` is missing after `npm install` (npm 11 didn't run the
+castlabs package's install script here), run `node node_modules/electron/install.js`.
 
 Sign in inside the app window once; the session persists across restarts. Closing the
 window hides it (the control server keeps running); quit fully from the app menu / Cmd+Q
@@ -70,16 +76,81 @@ particular — cannot see keypresses made while a Windows app has focus.
 
 ## Platform notes
 
-CastLabs' Electron build (bundles the Widevine CDM) is required on every platform; only
-**VMP signing** is being dropped, which is Linux-only-safe because the Linux Widevine CDM
-doesn't support or require VMP. That's why Linux (native, or via WSL2 + WSLg on Windows)
-is the supported target and macOS/native-Windows are not.
+CastLabs' Electron build (bundles the Widevine CDM) is required on every platform. Whether
+it also needs **VMP signing** depends on the platform:
 
-Verified: Apple issues streaming licenses to an unverified Linux software CDM (confirmed
-in Chromium on Linux, no VMP, `PLATFORM_UNVERIFIED`). Persistent/offline licenses are
-unavailable on Linux; streaming is unaffected.
+- **Linux:** no. The Linux Widevine CDM doesn't support or require VMP. Verified: Apple
+  issues streaming licenses to an unverified Linux software CDM (confirmed in Chromium on
+  Linux, no VMP, `PLATFORM_UNVERIFIED`). Persistent/offline licenses are unavailable on
+  Linux; streaming is unaffected.
+- **Windows:** yes, with a _production_ signature from castlabs EVS. See below.
 
-### WSL2 + WSLg (the Windows path)
+### Native Windows (the Windows path)
+
+CastLabs' Electron builds ship VMP-signed with a _development_ certificate, which Apple
+Music's production license server rejects: sign-in works but playback fails,
+Re-signing with a production certificate from castlabs' free EVS service fixes it.
+Verified: playback works both for the EVS-signed dev Electron and for the packaged `yabloko.exe`.
+
+One-time setup (needs Python):
+
+```
+python -m pip install --upgrade castlabs-evs
+python -m castlabs_evs.account signup
+```
+
+The EVS login token expires about monthly. Signing then asks for credentials again (or run
+`python -m castlabs_evs.account reauth`). Already-signed builds keep their signature
+(EVS reports it valid for ~3.7 years), so this only affects signing new builds.
+
+Dev workflow:
+
+```
+npm run sign:dev   # signs node_modules/electron/dist; redo after reinstalling electron
+npm start
+```
+
+`sign:dev` is deliberately explicit rather than a `postinstall`, because it can prompt for
+credentials. On non-Windows platforms it's a no-op, so the same `package.json` works under
+WSL.
+
+Release workflow:
+
+```
+npm run dist
+```
+
+On Windows this produces the unpacked app in `dist/win-unpacked/` (run `yabloko.exe` from
+there). Quit a running packaged `yabloko.exe` first, or the build fails with `EPERM`
+replacing its files. It packages the castlabs binaries from
+`node_modules/electron/dist`, not stock Electron. Each build VMP-signs `yabloko.exe` in an
+`afterSign` hook (`scripts/after-sign.js`), independent of `sign:dev`. That hook has to be
+`afterSign`, not `afterPack`: electron-builder's sign step edits the exe's resources even
+without an Authenticode certificate, which invalidates an earlier VMP signature. If
+Authenticode signing is ever added, VMP signing still has to come after it. Check a build
+with `python -m castlabs_evs.vmp verify-pkg dist/win-unpacked`.
+
+The dev app and the packaged app share a user-data directory and the single-instance
+lock: with one running, launching the other just focuses the first.
+
+### Linux release builds
+
+`npm run dist` builds for the OS it runs on, so on Linux (or inside WSL) it produces
+`dist/yabloko-<version>.AppImage` and `dist/yabloko-<version>.tar.gz` from the Linux
+castlabs binaries. No VMP signing is involved; the signing hook only runs for Windows
+builds. Windows and Linux packages each have to be built on their own OS, because
+`node_modules/electron/dist` only holds the binaries for the OS that ran `npm install`.
+
+Running the AppImage needs FUSE (`fuse2` on Arch, `libfuse2` on Ubuntu/Debian). Without
+it, use the tar.gz.
+
+### WSL2 + WSLg (alternative Windows path)
+
+Works without any VMP signing (it runs the Linux build), but **WSLg can't resize windows
+from the Windows side**: FancyZones, AHK `WinMove` and dragging the outer frame edge move
+the window but don't resize it, then leave it frozen (microsoft/wslg#22,
+microsoft/wslg#1267; affects every WSLg app, not just yabloko). If you use FancyZones,
+exclude `msrdc.exe` from it.
 
 Requires WSL2 with WSLg (WSL1 cannot run GUI apps). `npm install` must be run separately
 inside WSL — CastLabs Electron downloads platform-specific binaries, so `node_modules`
@@ -100,16 +171,6 @@ reach the server on your setup (e.g. `localhostForwarding=false`), either set
 `YABLOKO_HOST=0.0.0.0` (safe-ish under default NAT networking, but re-check exposure) or
 switch to `networkingMode=mirrored` in `.wslconfig` (Windows 11 22H2+), which keeps
 `localhost` meaningful in both directions.
-
-### Native Windows (not supported)
-
-Tested: CastLabs' Electron builds ship VMP-signed with a _development_ certificate, and
-Apple Music's production license server rejects it. On native Windows, sign-in works but
-playback fails with "Something went wrong. Please refresh the page and try again."
-
-Deliberately **not** pursuing EVS production signing: it is free, but it needs monthly
-`castlabs_evs.account reauth` and it only signs _packaged_ apps, which would pull
-packaging into scope.
 
 ## TODO
 

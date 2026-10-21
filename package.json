@@ -4,15 +4,39 @@
   "private": true,
   "description": "Apple Music desktop wrapper with a loopback HTTP control server",
   "main": "src/main/main.js",
+  "desktopName": "yabloko.desktop",
   "scripts": {
     "start": "electron .",
+    "sign:dev": "node scripts/evs-sign.js node_modules/electron/dist",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "dependencies": {
-    "electron": "github:castlabs/electron-releases#v43.7.7+wvcus"
+    "format:check": "prettier --check .",
+    "dist": "electron-builder"
   },
   "devDependencies": {
+    "electron": "github:castlabs/electron-releases#v43.7.7+wvcus",
+    "electron-builder": "26.17.0",
     "prettier": "3.9.10"
+  },
+  "build": {
+    "appId": "com.yabloko.app",
+    "productName": "yabloko",
+    "electronDist": "node_modules/electron/dist",
+    "electronVersion": "43.7.7",
+    "files": [
+      "src/**",
+      "package.json"
+    ],
+    "afterSign": "scripts/after-sign.js",
+    "win": {
+      "target": "dir"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "Audio",
+      "syncDesktopName": true
+    }
   }
 }
