@@ -92,6 +92,41 @@ function buildActionScript(action) {
     "    }\n" +
     "  };\n" +
     "\n" +
+    "  // Prefer the player bar's own favorite button: the app sends the request and\n" +
+    "  // updates its star itself, so there's no navigation (and no flash). It toggles,\n" +
+    "  // so only click when the server-side state differs, then confirm it took.\n" +
+    "  const clickFavoriteButton = async (want) => {\n" +
+    '    const btn = document.querySelector(".marquee-line-container [data-testid=favorite-button]");\n' +
+    "    if (!btn) return null;\n" +
+    '    if ((await readState()).favorited === want) return "noop";\n' +
+    "    btn.click();\n" +
+    "    for (let i = 0; i < 12; i++) {\n" +
+    "      await new Promise((resolve) => setTimeout(resolve, 250));\n" +
+    '      if ((await readState()).favorited === want) return "clicked";\n' +
+    "    }\n" +
+    "    return null;\n" +
+    "  };\n" +
+    "\n" +
+    '  if (action === "favorite" || action === "undo-favorite") {\n' +
+    "    let clicked = null;\n" +
+    "    try {\n" +
+    '      clicked = await clickFavoriteButton(action === "favorite");\n' +
+    "    } catch (e) {\n" +
+    "      clicked = null;\n" +
+    "    }\n" +
+    "    if (clicked) {\n" +
+    "      return {\n" +
+    "        ok: true,\n" +
+    "        action,\n" +
+    "        target: { type, id },\n" +
+    '        via: "button",\n' +
+    "        repainted: true,\n" +
+    '        noop: clicked === "noop",\n' +
+    "        track,\n" +
+    "      };\n" +
+    "    }\n" +
+    "  }\n" +
+    "\n" +
     "  let res;\n" +
     '  if (action === "favorite" || action === "undo-favorite") {\n' +
     "    const params = {};\n" +
@@ -122,7 +157,7 @@ function buildActionScript(action) {
     "    }\n" +
     "  }\n" +
     "\n" +
-    "  return { ok: true, action, target: { type, id }, repainted, noop, track };\n" +
+    '  return { ok: true, action, target: { type, id }, via: "api", repainted, noop, track };\n' +
     "})();"
   );
 }

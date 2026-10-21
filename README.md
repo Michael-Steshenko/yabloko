@@ -94,33 +94,24 @@ If the sandbox refuses to start, that's a restricted user-namespace
 setting; `--no-sandbox` is a diagnostic, not a fix. `--disable-gpu` narrows down GPU
 rendering issues.
 
-Loopback reachability from Windows into the WSL2 VM is untested — try `curl` against the
-default `127.0.0.1` bind from Windows first; if it doesn't reach the server, either set
+Verified: with the default `127.0.0.1` bind and no extra config, Windows-side scripts
+reach the control server inside the WSL2 VM via WSL2's localhost forwarding. If it doesn't
+reach the server on your setup (e.g. `localhostForwarding=false`), either set
 `YABLOKO_HOST=0.0.0.0` (safe-ish under default NAT networking, but re-check exposure) or
 switch to `networkingMode=mirrored` in `.wslconfig` (Windows 11 22H2+), which keeps
 `localhost` meaningful in both directions.
 
+### Native Windows (not supported)
+
+Tested: CastLabs' Electron builds ship VMP-signed with a _development_ certificate, and
+Apple Music's production license server rejects it. On native Windows, sign-in works but
+playback fails with "Something went wrong. Please refresh the page and try again."
+
+Deliberately **not** pursuing EVS production signing: it is free, but it needs monthly
+`castlabs_evs.account reauth` and it only signs _packaged_ apps, which would pull
+packaging into scope.
+
 ## TODO
-
-- [ ] **Test native Windows with the dev VMP signature.** CastLabs ships its
-      Electron builds already VMP-signed, but with a _development_ certificate —
-      valid for "Widevine UAT or other servers accepting development clients".
-      Apple Music is a production license server, so it will probably reject it,
-      but this has never been tried.
-
-      Cost to test: zero. On Windows, `npm install && npm start`, sign in, press
-      play. Audio plays → native Windows works with no signing, no account, no
-      packaging, and WSL becomes unnecessary. Playback fails (expect it at
-      license acquisition, so the UI loads but audio doesn't start) → stay on
-      WSLg.
-
-      Not a dependency of anything; purely an upside check. Note that even if it
-      works it is "works until Apple tightens dev-client acceptance", so don't
-      build on it without a fallback.
-
-      Deliberately **not** pursuing EVS production signing: it is free, but it
-      needs monthly `castlabs_evs.account reauth` and it only signs *packaged*
-      apps, which would pull packaging into scope.
 
 - [ ] Suggest less should also skip the track
 - [ ] For the refresh star hack (using navigation to force a repaint), check if we can use await instead of the 0ms delay we do.
