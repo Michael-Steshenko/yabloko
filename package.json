@@ -5,9 +5,14 @@
   "description": "Apple Music desktop wrapper with a loopback HTTP control server",
   "main": "src/main/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "electron": "github:castlabs/electron-releases#v43.7.7+wvcus"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
   }
 }

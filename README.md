@@ -86,6 +86,7 @@ inside WSL — CastLabs Electron downloads platform-specific binaries, so `node_
 isn't portable across host/WSL.
 
 If a bare WSL distro fails to launch Electron at all, install the required base display and audio libraries:
+
 - **Arch Linux:** `sudo pacman -S gtk3 mesa nss pulseaudio-alsa`
 - **Ubuntu / Debian:** `sudo apt install libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgbm1 libasound2 libgtk-3-0 libxshmfence1`
 
