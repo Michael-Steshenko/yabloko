@@ -1,3 +1,4 @@
+const path = require("path");
 const { app, BrowserWindow, shell, components } = require("electron");
 const { createServer } = require("./http-server");
 
@@ -29,6 +30,8 @@ if (!app.requestSingleInstanceLock()) {
     mainWindow = new BrowserWindow({
       width: 1200,
       height: 800,
+      // Packaged Windows builds take the exe's icon; this covers `npm start` and Linux
+      icon: path.join(__dirname, "..", "..", "assets", "icon.png"),
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
