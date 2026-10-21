@@ -4,7 +4,7 @@
 import evsSign from "./evs-sign.js";
 
 const _default = async function afterSign(context) {
-  // win32 here stands for windows not a 32bit binary, holdover form the Win32 API
+  // win32 here stands for windows not a 32bit binary, holdover from the Win32 API
   if (context.electronPlatformName !== "win32") return;
   evsSign(context.appOutDir);
 };
