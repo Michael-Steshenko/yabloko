@@ -22,9 +22,26 @@ no install script and fetches them into `node_modules/electron/dist` on first ru
 `npm run sign:dev` and `npm run dist` read that folder directly, so they run
 `install-electron` first (a no-op once the binaries are there).
 
-Sign in inside the app window once; the session persists across restarts. Closing the
-window hides it (the control server keeps running); quit fully from the app menu / Cmd+Q
-equivalent.
+Sign in inside the app window once; the session persists across restarts.
+
+yabloko puts an icon in the system tray. Clicking it brings the window up (from hidden
+or minimized); right-clicking it opens a menu (the same items are in the window's `yabloko` menu):
+
+- **Show Yabloko**
+- **When closing the window:** _Keep playing in tray_ (default: the X hides the window and
+  music and the control server keep running) or _Quit Yabloko_
+- **Start hidden in tray:** off by default. Turn it on to run yabloko headless, controlled
+  only through the control server (sign in with the window shown first)
+- **Resume last playback on start:** off by default. While on, yabloko remembers the
+  station, playlist or album that's playing (in `last-playback.json`, updated on every song
+  change, so it also survives a crash) and, on the next start, plays it again
+  once you're signed in: playlists and albums from the start of the song you were on,
+  stations from wherever the station is
+- **Reset settings to defaults…:** asks for confirmation, then restores the defaults above
+- **Quit Yabloko**
+
+These settings are saved in `settings.json` in yabloko's user-data folder. Starting
+yabloko again while it's running also brings back its window.
 
 When run unpackaged, `src/renderer/musickit-actions.js` is re-read on every action, so
 edits to it apply on the next request without a restart. Changes under `src/main/` still
@@ -145,6 +162,12 @@ builds. Windows and Linux packages each have to be built on their own OS, becaus
 
 Running the AppImage needs FUSE (`fuse2` on Arch, `libfuse2` on Ubuntu/Debian). Without
 it, use the tar.gz.
+
+Stock GNOME doesn't show tray icons without the AppIndicator extension (Ubuntu ships it).
+Without a tray, a hidden window is brought back by starting yabloko again (e.g.
+double-clicking the AppImage); its `yabloko` menu can then switch _When closing the window_
+to _Quit Yabloko_. On Linux, clicking the tray icon may open the menu instead of showing
+the window.
 
 ### WSL2 + WSLg (alternative Windows path)
 
