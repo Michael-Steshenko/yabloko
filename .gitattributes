@@ -1,0 +1,2 @@
+# LF everywhere (Prettier's default), overriding core.autocrlf on Windows checkouts
+* text=auto eol=lf

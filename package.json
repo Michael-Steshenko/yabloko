@@ -7,10 +7,10 @@
   "desktopName": "yabloko.desktop",
   "scripts": {
     "start": "electron .",
-    "sign:dev": "node scripts/evs-sign.js node_modules/electron/dist",
+    "sign:dev": "install-electron && node scripts/evs-sign.js node_modules/electron/dist",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "dist": "electron-builder"
+    "dist": "install-electron && electron-builder"
   },
   "devDependencies": {
     "electron": "github:castlabs/electron-releases#v43.7.7+wvcus",

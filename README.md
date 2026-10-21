@@ -17,8 +17,10 @@ npm start
 On native Windows, VMP-sign the dev Electron once before `npm start` (see "Native
 Windows" below): `npm run sign:dev`.
 
-If `node_modules/electron/dist` is missing after `npm install` (npm 11 didn't run the
-castlabs package's install script here), run `node node_modules/electron/install.js`.
+`npm install` doesn't download the Electron binaries: the castlabs `electron` package has
+no install script and fetches them into `node_modules/electron/dist` on first run instead.
+`npm run sign:dev` and `npm run dist` read that folder directly, so they run
+`install-electron` first (a no-op once the binaries are there).
 
 Sign in inside the app window once; the session persists across restarts. Closing the
 window hides it (the control server keeps running); quit fully from the app menu / Cmd+Q
