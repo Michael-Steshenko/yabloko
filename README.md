@@ -18,6 +18,10 @@ Sign in inside the app window once; the session persists across restarts. Closin
 window hides it (the control server keeps running); quit fully from the app menu / Cmd+Q
 equivalent.
 
+When run unpackaged, `src/renderer/musickit-actions.js` is re-read on every action, so
+edits to it apply on the next request without a restart. Changes under `src/main/` still
+need one.
+
 ## Control server
 
 Binds to loopback by default. Configurable via env vars:
