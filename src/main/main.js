@@ -280,6 +280,7 @@ if (!app.requestSingleInstanceLock()) {
       host: HOST,
       port: PORT,
       getWebContents: () => (mainWindow ? mainWindow.webContents : null),
+      onQuit: () => app.quit(),
     });
     server.on("error", (err) => {
       if (err.code === "EADDRINUSE") {

@@ -26,7 +26,7 @@ function statusFor(result) {
   return 502;
 }
 
-function createServer({ host, port, getWebContents }) {
+function createServer({ host, port, getWebContents, onQuit }) {
   const server = http.createServer(async (req, res) => {
     const send = (status, body) => {
       res.writeHead(status, { "Content-Type": "application/json" });
@@ -57,6 +57,12 @@ function createServer({ host, port, getWebContents }) {
 
     const path = (req.url || "/").split("?")[0];
     const webContents = getWebContents();
+
+    if (path === "/quit") {
+      // Quit only once the response is out, so the caller sees it succeed
+      res.on("finish", onQuit);
+      return send(200, { ok: true, action: "quit" });
+    }
 
     if (path === "/health") {
       const result = await runAction(webContents, "health");

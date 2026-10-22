@@ -67,7 +67,11 @@ curl http://127.0.0.1:8787/favorite
 curl http://127.0.0.1:8787/undo-favorite
 curl http://127.0.0.1:8787/suggest-less
 curl http://127.0.0.1:8787/health
+curl http://127.0.0.1:8787/quit
 ```
+
+`/quit` quits the app completely, whatever the window's X is set to do (it doesn't
+just hide it in the tray). It works even before MusicKit has loaded.
 
 Responses are JSON. `/health` reports MusicKit availability, the current now-playing
 track, the resolved rating target, and current favorite/suggest-less state. Unknown path
