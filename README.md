@@ -37,6 +37,9 @@ or minimized); right-clicking it opens a menu (the same items are in the window'
   change, so it also survives a crash) and, on the next start, plays it again
   once you're signed in: playlists and albums from the start of the song you were on,
   stations from wherever the station is
+- **Skip song on suggest less:** on by default. Suggesting less of the song that's
+  playing, from the page's own menu or the `suggest-less` endpoint, also skips to the next song.
+  Suggesting less of a song that isn't playing (e.g. a row in an album) doesn't skip anything
 - **Reset settings to defaults…:** asks for confirmation, then restores the defaults above
 - **Quit Yabloko**
 
@@ -75,6 +78,9 @@ Note: `favorite` and `suggest-less` are mutually exclusive server-side (Apple st
 as one `personalRating` field) — calling `suggest-less` on a favorited track un-favorites
 it, and there is deliberately no `undo-suggest-less` endpoint (see the source comments in
 `musickit-actions.js`/plan history for why).
+
+`suggest-less` also skips to the next track while _Skip song on suggest less_ is on (see
+above).
 
 ### Hardening
 
@@ -199,6 +205,5 @@ switch to `networkingMode=mirrored` in `.wslconfig` (Windows 11 22H2+), which ke
 
 ## TODO
 
-- [ ] Suggest less should also skip the track
 - [ ] For the refresh star hack (using navigation to force a repaint), check if we can use await instead of the 0ms delay we do.
 - [ ] check if we can preserve the scroll location when doing the refresh star hack

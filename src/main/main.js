@@ -21,6 +21,7 @@ const {
 const {
   buildWatchScript,
   buildRestoreScript,
+  buildSkipScript,
 } = require("../renderer/playback-state");
 
 const PORT = Number(process.env.YABLOKO_PORT) || 8787;
@@ -102,6 +103,12 @@ function settingsMenuItems() {
       checked: settings.resumePlayback,
       click: (item) => setSetting("resumePlayback", item.checked),
     },
+    {
+      label: "Skip song on suggest less",
+      type: "checkbox",
+      checked: settings.skipOnSuggestLess,
+      click: (item) => setSetting("skipOnSuggestLess", item.checked),
+    },
     { label: "Reset settings to defaults…", click: resetSettings },
     { type: "separator" },
     { label: "Quit Yabloko", click: () => app.quit() },
@@ -145,6 +152,40 @@ ipcMain.on("playback-changed", (event, state) => {
   });
 });
 
+// Suggest less is a PUT of rating -1 to /v1/me/ratings/<type>/<id>, whether it comes
+// from the page's own menu or from our hotkey action. Watching the network catches both
+// however the page sends it, and the skip starts the moment the request goes out.
+const RATING_PATH = /\/v1\/me\/ratings\/[a-z-]+\/([^/?]+)/;
+
+function isSuggestLess(details) {
+  if (details.method !== "PUT" || !details.uploadData) return false;
+  try {
+    const body = Buffer.concat(
+      details.uploadData.filter((d) => d.bytes).map((d) => d.bytes),
+    );
+    return JSON.parse(body.toString("utf8")).attributes.value === -1;
+  } catch {
+    return false;
+  }
+}
+
+function watchSuggestLess(contents) {
+  contents.session.webRequest.onBeforeRequest(
+    { urls: ["https://*.apple.com/v1/me/ratings/*"] },
+    (details, callback) => {
+      callback({}); // never hold up the request itself
+      if (!settings.skipOnSuggestLess || !isSuggestLess(details)) return;
+      const match = RATING_PATH.exec(new URL(details.url).pathname);
+      if (!match) return;
+      contents
+        .executeJavaScript(buildSkipScript(decodeURIComponent(match[1])))
+        .catch((err) =>
+          console.error("yabloko: skip on suggest less failed", err),
+        );
+    },
+  );
+}
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
@@ -176,6 +217,8 @@ if (!app.requestSingleInstanceLock()) {
         preload: path.join(__dirname, "..", "preload", "playback.js"),
       },
     });
+
+    watchSuggestLess(mainWindow.webContents);
 
     // Resume once, on whichever page load completes first
     const lastPlayback = loadLastPlayback();

@@ -77,8 +77,27 @@ async function restore(state) {
   return { ok: true, key, containerName: state.containerName };
 }
 
+// Skip to the next song, but only if the given id (from a rating request) is the song
+// playing now: Suggest Less can also be picked on other songs, e.g. an album row.
+// Ratings use the catalog id or, for library-only songs, the library id.
+function skipIfPlaying(id) {
+  const music =
+    window.MusicKit &&
+    window.MusicKit.getInstance &&
+    window.MusicKit.getInstance();
+  const item = music && music.nowPlayingItem;
+  if (!item) return { skipped: false, code: "nothing-playing" };
+  const pp = item.playParams || {};
+  const ids = [item.id, pp.id, pp.catalogId].filter(Boolean).map(String);
+  if (!ids.includes(id)) return { skipped: false, code: "not-playing" };
+  music.skipToNextItem();
+  return { skipped: true };
+}
+
 const buildWatchScript = () => `(${watch.toString()})()`;
 const buildRestoreScript = (state) =>
   `(${restore.toString()})(${JSON.stringify(state)})`;
+const buildSkipScript = (id) =>
+  `(${skipIfPlaying.toString()})(${JSON.stringify(id)})`;
 
-module.exports = { buildWatchScript, buildRestoreScript };
+module.exports = { buildWatchScript, buildRestoreScript, buildSkipScript };

@@ -133,6 +133,8 @@ function buildActionScript(action) {
     '    params["ids[" + type + "]"] = id;\n' +
     '    res = await send("/v1/me/favorites", { params, method: action === "favorite" ? "POST" : "DELETE" });\n' +
     '  } else if (action === "suggest-less") {\n' +
+    "    // The skip (when enabled) is done by the main process as soon as it sees this\n" +
+    "    // request go out, the same as for the page's own Suggest Less menu item\n" +
     '    res = await send("/v1/me/ratings/" + type + "/" + id, {\n' +
     '      method: "PUT",\n' +
     '      headers: { "Content-Type": "application/json" },\n' +
