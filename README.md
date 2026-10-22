@@ -25,7 +25,7 @@ no install script and fetches them into `node_modules/electron/dist` on first ru
 Sign in inside the app window once; the session persists across restarts.
 
 yabloko puts an icon in the system tray. Clicking it brings the window up (from hidden
-or minimized); right-clicking it opens a menu (the same items are in the window's `yabloko` menu):
+or minimized); right-clicking it opens a menu (the same items are in the window's `Yabloko` menu):
 
 - **Show Yabloko**
 - **When closing the window:** _Keep playing in tray_ (default: the X hides the window and
@@ -109,7 +109,7 @@ it also needs **VMP signing** depends on the platform:
 CastLabs' Electron builds ship VMP-signed with a _development_ certificate, which Apple
 Music's production license server rejects: sign-in works but playback fails,
 Re-signing with a production certificate from castlabs' free EVS service fixes it.
-Verified: playback works both for the EVS-signed dev Electron and for the packaged `yabloko.exe`.
+Verified: playback works both for the EVS-signed dev Electron and for the packaged `Yabloko.exe`.
 
 One-time setup (needs Python):
 
@@ -139,10 +139,10 @@ Release workflow:
 npm run dist
 ```
 
-On Windows this produces the unpacked app in `dist/win-unpacked/` (run `yabloko.exe` from
-there). Quit a running packaged `yabloko.exe` first, or the build fails with `EPERM`
+On Windows this produces the unpacked app in `dist/win-unpacked/` (run `Yabloko.exe` from
+there). Quit a running packaged `Yabloko.exe` first, or the build fails with `EPERM`
 replacing its files. It packages the castlabs binaries from
-`node_modules/electron/dist`, not stock Electron. Each build VMP-signs `yabloko.exe` in an
+`node_modules/electron/dist`, not stock Electron. Each build VMP-signs `Yabloko.exe` in an
 `afterSign` hook (`scripts/after-sign.js`), independent of `sign:dev`. That hook has to be
 `afterSign`, not `afterPack`: electron-builder's sign step edits the exe's resources even
 without an Authenticode certificate, which invalidates an earlier VMP signature. If
@@ -155,7 +155,7 @@ lock: with one running, launching the other just focuses the first.
 ### Linux release builds
 
 `npm run dist` builds for the OS it runs on, so on Linux (or inside WSL) it produces
-`dist/yabloko-<version>.AppImage` and `dist/yabloko-<version>.tar.gz` from the Linux
+`dist/Yabloko-<version>.AppImage` and `dist/Yabloko-<version>.tar.gz` from the Linux
 castlabs binaries. No VMP signing is involved; the signing hook only runs for Windows
 builds. Windows and Linux packages each have to be built on their own OS, because
 `node_modules/electron/dist` only holds the binaries for the OS that ran `npm install`.
@@ -165,7 +165,7 @@ it, use the tar.gz.
 
 Stock GNOME doesn't show tray icons without the AppIndicator extension (Ubuntu ships it).
 Without a tray, a hidden window is brought back by starting yabloko again (e.g.
-double-clicking the AppImage); its `yabloko` menu can then switch _When closing the window_
+double-clicking the AppImage); its `Yabloko` menu can then switch _When closing the window_
 to _Quit Yabloko_. On Linux, clicking the tray icon may open the menu instead of showing
 the window.
 

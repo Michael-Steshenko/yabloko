@@ -112,7 +112,7 @@ function updateMenus() {
   if (tray) tray.setContextMenu(Menu.buildFromTemplate(settingsMenuItems()));
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
-      { label: "yabloko", submenu: settingsMenuItems() },
+      { label: "Yabloko", submenu: settingsMenuItems() },
       { role: "editMenu" },
       { role: "viewMenu" },
     ]),
@@ -225,7 +225,7 @@ if (!app.requestSingleInstanceLock()) {
     tray = new Tray(
       nativeImage.createFromPath(ICON_PATH).resize({ width: 32, height: 32 }),
     );
-    tray.setToolTip("yabloko");
+    tray.setToolTip("Yabloko");
     // Only ever brings the window up (from hidden or minimized), never hides it. Linux
     // AppIndicator trays never emit click; there the menu's "Show Yabloko" covers it.
     tray.on("click", showWindow);

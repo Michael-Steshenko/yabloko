@@ -20,7 +20,7 @@
   },
   "build": {
     "appId": "com.yabloko.app",
-    "productName": "yabloko",
+    "productName": "Yabloko",
     "icon": "assets/icon.png",
     "electronDist": "node_modules/electron/dist",
     "electronVersion": "43.7.7",
