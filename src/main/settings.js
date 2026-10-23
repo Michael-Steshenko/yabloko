@@ -5,11 +5,15 @@ const { app } = require("electron");
 // closeAction: what the window's X does: "tray" (hide, keep playing) or "quit"
 // resumePlayback: on start, play the station/playlist/album that was playing last
 // skipOnSuggestLess: suggesting less of the playing song (hotkey or menu) also skips it
+// miniPlayer: show the mini player above the taskbar while the window is in the tray
+// miniPlayerPosition: where the mini player was dragged to ({ x, y }), null for the default
 const DEFAULTS = {
   closeAction: "tray",
   startHidden: false,
   resumePlayback: false,
   skipOnSuggestLess: true,
+  miniPlayer: true,
+  miniPlayerPosition: null,
 };
 
 const file = (name) => path.join(app.getPath("userData"), name);

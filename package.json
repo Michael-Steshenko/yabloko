@@ -9,6 +9,7 @@
   "scripts": {
     "start": "electron .",
     "sign:dev": "install-electron && node scripts/evs-sign.js node_modules/electron/dist",
+    "icons": "electron scripts/render-icons.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "dist": "install-electron && electron-builder"
@@ -27,6 +28,7 @@
     "files": [
       "src/**",
       "assets/icon.png",
+      "assets/icons/**",
       "package.json"
     ],
     "afterSign": "scripts/after-sign.js",

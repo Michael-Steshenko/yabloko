@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src https://*.mzstatic.com https://*.apple.com"
+    />
+    <title>Yabloko mini player</title>
+    <style>
+      :root {
+        --bg: rgba(32, 32, 34, 0.94);
+        --border: rgba(255, 255, 255, 0.09);
+        --text: #f5f5f7;
+        --muted: #a1a1a6;
+        --hover: rgba(255, 255, 255, 0.1);
+        --active: rgba(255, 255, 255, 0.16);
+        --placeholder: #3a3a3c;
+        --accent: #fa2d48;
+        --shadow: rgba(0, 0, 0, 0.35);
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: rgba(250, 250, 252, 0.96);
+          --border: rgba(0, 0, 0, 0.08);
+          --text: #1d1d1f;
+          --muted: #6e6e73;
+          --hover: rgba(0, 0, 0, 0.06);
+          --active: rgba(0, 0, 0, 0.11);
+          --placeholder: #e5e5ea;
+          --shadow: rgba(0, 0, 0, 0.18);
+        }
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+        user-select: none;
+      }
+      body {
+        /* Room around the pill for its shadow; matches MARGIN in mini-player.js */
+        padding: 8px;
+        box-sizing: border-box;
+        font:
+          13px "Segoe UI Variable Text",
+          "Segoe UI",
+          system-ui,
+          sans-serif;
+        color: var(--text);
+      }
+      .pill {
+        position: relative;
+        height: 48px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 8px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: 0 3px 10px var(--shadow);
+      }
+      .song {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        padding-right: 6px;
+      }
+      .pill:active:not(:has(button:active)) {
+        cursor: grabbing;
+      }
+      .art {
+        width: 32px;
+        height: 32px;
+        flex: none;
+        border-radius: 50%;
+        background: var(--placeholder) center / cover no-repeat;
+        cursor: pointer;
+      }
+      .text {
+        min-width: 0;
+        line-height: 1.25;
+        cursor: pointer;
+      }
+      .title,
+      .artist {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: left;
+      }
+      .title {
+        font-weight: 600;
+      }
+      .artist {
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      button {
+        width: 30px;
+        height: 30px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+      button:hover {
+        background: var(--hover);
+      }
+      button:active {
+        background: var(--active);
+      }
+      button:disabled {
+        opacity: 0.35;
+        background: transparent;
+        cursor: default;
+      }
+      button svg {
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+      }
+      #play-pause svg {
+        width: 22px;
+        height: 22px;
+      }
+      #favorite.on {
+        color: var(--accent);
+      }
+      #favorite:not(.on),
+      #suggest-less:not(.on) {
+        color: var(--muted);
+      }
+      #favorite:not(.on):hover,
+      #suggest-less:not(.on):hover {
+        color: var(--text);
+      }
+      /* A small round × on the pill's top-right corner, only while hovering the pill */
+      #close {
+        position: absolute;
+        top: -6px;
+        right: 2px;
+        width: 18px;
+        height: 18px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      .pill:hover #close {
+        opacity: 1;
+      }
+      #close:hover {
+        background: var(--bg);
+        color: var(--text);
+      }
+      #close svg {
+        width: 11px;
+        height: 11px;
+      }
+      .divider {
+        width: 1px;
+        height: 20px;
+        margin: 0 4px;
+        flex: none;
+        background: var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pill">
+      <div class="song">
+        <div class="art" id="art" title="Show Yabloko"></div>
+        <div class="text" title="Show Yabloko">
+          <div class="title" id="title" dir="auto"></div>
+          <div class="artist" id="artist" dir="auto"></div>
+        </div>
+      </div>
+      <button id="favorite" data-command="favorite"></button>
+      <button
+        id="suggest-less"
+        data-command="suggest-less"
+        title="Suggest less"
+      ></button>
+      <div class="divider"></div>
+      <button id="previous" data-command="previous" title="Previous"></button>
+      <button id="play-pause" data-command="play-pause"></button>
+      <button id="next" data-command="next" title="Next"></button>
+      <button
+        id="close"
+        data-command="close"
+        title="Turn off the mini player (back on from the tray menu)"
+      ></button>
+    </div>
+    <script src="../icons.js"></script>
+    <script src="mini-player.js"></script>
+  </body>
+</html>

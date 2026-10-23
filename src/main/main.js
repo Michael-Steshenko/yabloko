@@ -7,10 +7,15 @@ const {
   dialog,
   ipcMain,
   nativeImage,
+  nativeTheme,
   shell,
   components,
 } = require("electron");
 const { createServer } = require("./http-server");
+const { createNowPlaying } = require("./now-playing");
+const { watchRatingRequests } = require("./rating-requests");
+const { createMiniPlayer } = require("./mini-player");
+const { updateTaskbar } = require("./taskbar");
 const {
   DEFAULTS,
   loadSettings,
@@ -34,6 +39,11 @@ let server = null;
 let tray = null;
 let settings = null;
 let isQuitting = false;
+let miniPlayer = null;
+
+const nowPlaying = createNowPlaying({
+  getContents: () => (mainWindow ? mainWindow.webContents : null),
+});
 
 function showWindow() {
   if (!mainWindow) return;
@@ -46,7 +56,48 @@ function setSetting(key, value) {
   settings[key] = value;
   saveSettings(settings);
   updateMenus(); // keep the tray menu and the window menu in sync
+  updateNowPlaying();
 }
+
+function runCommand(name) {
+  if (name === "show") showWindow();
+  else if (name === "close") setSetting("miniPlayer", false);
+  else nowPlaying.command(name);
+}
+
+const STATUS = (state) =>
+  state.favorited
+    ? "★ Favorite"
+    : state.suggestLess
+      ? "👎 Suggested less"
+      : "☆ Not favorited";
+const truncate = (text, max) =>
+  text.length > max ? text.slice(0, max - 1) + "…" : text;
+
+// Shows what's playing in the tray tooltip, the taskbar (window title, badge, preview
+// buttons) and the mini player, which is up while the window is in the tray, also when
+// nothing is playing
+function updateNowPlaying() {
+  const state = nowPlaying.get();
+  const song = state && [state.title, state.artist].filter(Boolean).join(" — ");
+  if (tray) {
+    // Windows cuts tooltips off at 127 characters
+    tray.setToolTip(
+      state ? `${truncate(song, 100)}\n${STATUS(state)}` : "Yabloko",
+    );
+  }
+  if (mainWindow) {
+    mainWindow.setTitle(state ? `${song} — Yabloko` : "Yabloko");
+    updateTaskbar(mainWindow, state, runCommand);
+  }
+  if (miniPlayer) {
+    miniPlayer.update(state);
+    miniPlayer.setVisible(
+      Boolean(settings.miniPlayer && mainWindow && !mainWindow.isVisible()),
+    );
+  }
+}
+nowPlaying.onChange(updateNowPlaying);
 
 async function resetSettings() {
   const options = {
@@ -67,6 +118,7 @@ async function resetSettings() {
   settings = { ...DEFAULTS };
   saveSettings(settings);
   updateMenus();
+  updateNowPlaying();
 }
 
 // Shared by the tray menu and the window's menu bar. The menu bar copy matters where
@@ -108,6 +160,12 @@ function settingsMenuItems() {
       type: "checkbox",
       checked: settings.skipOnSuggestLess,
       click: (item) => setSetting("skipOnSuggestLess", item.checked),
+    },
+    {
+      label: "Show mini player when in tray",
+      type: "checkbox",
+      checked: settings.miniPlayer,
+      click: (item) => setSetting("miniPlayer", item.checked),
     },
     { label: "Reset settings to defaults…", click: resetSettings },
     { type: "separator" },
@@ -152,38 +210,28 @@ ipcMain.on("playback-changed", (event, state) => {
   });
 });
 
-// Suggest less is a PUT of rating -1 to /v1/me/ratings/<type>/<id>, whether it comes
-// from the page's own menu or from our hotkey action. Watching the network catches both
-// however the page sends it, and the skip starts the moment the request goes out.
-const RATING_PATH = /\/v1\/me\/ratings\/[a-z-]+\/([^/?]+)/;
-
-function isSuggestLess(details) {
-  if (details.method !== "PUT" || !details.uploadData) return false;
-  try {
-    const body = Buffer.concat(
-      details.uploadData.filter((d) => d.bytes).map((d) => d.bytes),
-    );
-    return JSON.parse(body.toString("utf8")).attributes.value === -1;
-  } catch {
-    return false;
-  }
-}
-
-function watchSuggestLess(contents) {
-  contents.session.webRequest.onBeforeRequest(
-    { urls: ["https://*.apple.com/v1/me/ratings/*"] },
-    (details, callback) => {
-      callback({}); // never hold up the request itself
-      if (!settings.skipOnSuggestLess || !isSuggestLess(details)) return;
-      const match = RATING_PATH.exec(new URL(details.url).pathname);
-      if (!match) return;
+// Rating changes, from the page's own buttons and menus or from ours (hotkeys, mini
+// player, taskbar), all go through the same requests; see rating-requests.js
+function watchRatings(contents) {
+  watchRatingRequests(contents.session, {
+    // Suggest less skips the moment the request goes out. The request names the song,
+    // so the rating can't land on the next one.
+    onSent: (change) => {
+      if (!change.suggestLess || !settings.skipOnSuggestLess) return;
       contents
-        .executeJavaScript(buildSkipScript(decodeURIComponent(match[1])))
+        .executeJavaScript(buildSkipScript(change.ids))
         .catch((err) =>
           console.error("yabloko: skip on suggest less failed", err),
         );
     },
-  );
+    onDone: nowPlaying.applyRatingChange,
+    onUnrecognized: (details) => {
+      console.warn(
+        `yabloko: unrecognized rating request ${details.method} ${new URL(details.url).pathname}, reading the rating back`,
+      );
+      nowPlaying.refreshRatingSoon();
+    },
+  });
 }
 
 if (!app.requestSingleInstanceLock()) {
@@ -218,7 +266,15 @@ if (!app.requestSingleInstanceLock()) {
       },
     });
 
-    watchSuggestLess(mainWindow.webContents);
+    watchRatings(mainWindow.webContents);
+
+    // The title shows the song instead of the page's own title
+    mainWindow.on("page-title-updated", (event) => event.preventDefault());
+    // Showing or hiding the window toggles the mini player. Windows also drops the
+    // preview buttons when the window is hidden, so this puts them back.
+    mainWindow.on("show", updateNowPlaying);
+    mainWindow.on("hide", updateNowPlaying);
+    nativeTheme.on("updated", updateNowPlaying);
 
     // Resume once, on whichever page load completes first
     const lastPlayback = loadLastPlayback();
@@ -273,6 +329,13 @@ if (!app.requestSingleInstanceLock()) {
     // AppIndicator trays never emit click; there the menu's "Show Yabloko" covers it.
     tray.on("click", showWindow);
     updateMenus();
+
+    miniPlayer = createMiniPlayer({
+      onCommand: runCommand,
+      getPosition: () => settings.miniPlayerPosition,
+      savePosition: (position) => setSetting("miniPlayerPosition", position),
+    });
+    updateNowPlaying();
 
     // Started before the page loads, so it doesn't depend on that load succeeding; until
     // MusicKit is up, actions answer "not ready"

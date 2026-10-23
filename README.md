@@ -40,11 +40,25 @@ or minimized); right-clicking it opens a menu (the same items are in the window'
 - **Skip song on suggest less:** on by default. Suggesting less of the song that's
   playing, from the page's own menu or the `suggest-less` endpoint, also skips to the next song.
   Suggesting less of a song that isn't playing (e.g. a row in an album) doesn't skip anything
+- **Show mini player when in tray:** on by default. While the window is in the tray, a
+  small pill sits above the taskbar next to the clock: artwork, song and artist, ☆/★
+  (favorite, click to toggle), 👎 (suggest less), ⏮ ⏯ ⏭. When nothing is playing it
+  stays up, showing "Nothing playing" with those buttons disabled. Clicking the song
+  brings the window back; its × turns this setting off. Drag it (anywhere but
+  its buttons) to move it; it stays where you drop it, also across restarts, until
+  _Reset settings_ puts it back by the clock
 - **Reset settings to defaults…:** asks for confirmation, then restores the defaults above
 - **Quit Yabloko**
 
 These settings are saved in `settings.json` in yabloko's user-data folder. Starting
 yabloko again while it's running also brings back its window.
+
+What's playing also shows without the mini player: hovering the tray icon shows the song
+and its status, and on Windows the window title is the song, its taskbar button has a
+☆/★/👎 badge, and its hover preview has ☆ ⏮ ⏯ ⏭ 👎 buttons. The taskbar icons are PNGs in
+`assets/icons/`, rendered from `src/renderer/icons.js`. They're committed, so building
+doesn't need to render them; after changing an icon, run `npm run icons` and commit the
+new PNGs.
 
 When run unpackaged, `src/renderer/musickit-actions.js` is re-read on every action, so
 edits to it apply on the next request without a restart. Changes under `src/main/` still
@@ -178,6 +192,18 @@ Without a tray, a hidden window is brought back by starting yabloko again (e.g.
 double-clicking the AppImage); its `Yabloko` menu can then switch _When closing the window_
 to _Quit Yabloko_. On Linux, clicking the tray icon may open the menu instead of showing
 the window.
+
+### Linux: untested or not implemented
+
+- **Not implemented:** the taskbar badge (☆/★/👎) and the hover-preview buttons are
+  Windows-only taskbar features; on Linux they're skipped.
+- **Untested: the mini player.** It's a transparent window, which needs a compositor;
+  without one the pill may get a black box around it. On Wayland, apps can't place their
+  own windows, so the default spot by the clock, dragging and the remembered position
+  probably don't work there. Some window managers may also ignore always-on-top or let
+  it take focus.
+- **Untested: the tray tooltip** with the song and its status. Many AppIndicator trays
+  don't show tooltips at all.
 
 ### WSL2 + WSLg (alternative Windows path)
 
