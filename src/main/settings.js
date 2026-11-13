@@ -10,7 +10,9 @@ const { app } = require("electron");
 // miniPlayerOnTop: the mini player stays above other windows
 // miniPlayerOnTopFullscreen: ...also above a full-screen app (game, video) on its screen
 // windowOnTop: the main window stays above other windows
+// theme: "system", "light" or "dark", for the page and the mini player
 const DEFAULTS = {
+  theme: "system",
   closeAction: "tray",
   startHidden: false,
   resumePlayback: false,

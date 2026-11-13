@@ -53,9 +53,19 @@ function showWindow() {
   mainWindow.focus();
 }
 
+// Light or dark for every page (prefers-color-scheme): the Apple Music page and the
+// mini player, also the window frame and menus. "system" follows Windows' app mode.
+const THEMES = ["system", "light", "dark"];
+function applyTheme() {
+  nativeTheme.themeSource = THEMES.includes(settings.theme)
+    ? settings.theme
+    : "system";
+}
+
 function setSetting(key, value) {
   settings[key] = value;
   saveSettings(settings);
+  applyTheme();
   updateMenus(); // keep the tray menu and the window menu in sync
   updateNowPlaying();
 }
@@ -141,6 +151,7 @@ async function resetSettings() {
   if (response !== 0) return;
   settings = { ...DEFAULTS };
   saveSettings(settings);
+  applyTheme();
   updateMenus();
   updateNowPlaying();
 }
@@ -190,6 +201,19 @@ function settingsMenuItems() {
       type: "checkbox",
       checked: settings.miniPlayer,
       click: (item) => setSetting("miniPlayer", item.checked),
+    },
+    {
+      label: "Theme",
+      submenu: [
+        ["system", "System"],
+        ["light", "Light"],
+        ["dark", "Dark"],
+      ].map(([value, label]) => ({
+        label,
+        type: "radio",
+        checked: settings.theme === value,
+        click: () => setSetting("theme", value),
+      })),
     },
     {
       label: "Always on top",
@@ -319,6 +343,7 @@ if (!app.requestSingleInstanceLock()) {
       .replace(/\s*yabloko\/\S+/, "");
 
     settings = loadSettings();
+    applyTheme();
 
     mainWindow = new BrowserWindow({
       width: 1200,

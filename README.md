@@ -48,6 +48,8 @@ or minimized); right-clicking it opens a menu (the same items are in the window'
   its buttons) to move it; it stays where you drop it, also across restarts, until
   _Reset settings_ puts it back by the clock. Its ★ uses Apple Music's own accent color
   (light blue in dark theme, blue in light theme), like the page's player
+- **Theme:** _System_ (default: follows Windows' app mode), _Light_ or _Dark_. Applies to
+  the Apple Music page, the mini player and the window's frame and menus, right away
 - **Always on top:**
   - _Mini player:_ on by default; off makes it an ordinary window other windows can cover
   - _Mini player over full-screen apps:_ off by default, so while a full-screen app (a
