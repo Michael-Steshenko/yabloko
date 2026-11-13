@@ -87,14 +87,13 @@ git checkout main && git merge dev && git push && git checkout dev
 ### Releases
 
 `.github/workflows/release.yml` runs on every push to `main`. It builds the Windows
-package (VMP-signed) and the Linux AppImage and tar.gz, then publishes them as a GitHub
-release:
+package (VMP-signed) and publishes it as a GitHub release. Linux packages aren't released
+yet, until the Linux build has been tested; build them locally (see "Linux release builds").
 
 - **Version:** major.minor from `package.json`, patch from the workflow's run number,
   e.g. `v0.1.7`. Bump major or minor in `package.json` to move those on.
 - **Release notes:** the subject line of every commit since the previous release.
-- **Assets:** `Yabloko-<version>-win-x64.zip` (unzip and run `Yabloko.exe`),
-  `Yabloko-<version>.AppImage` and `Yabloko-<version>.tar.gz`.
+- **Asset:** `Yabloko-<version>-win-x64.zip` (unzip and run `Yabloko.exe`).
 
 Windows signing logs in to castlabs EVS with the repository secrets `EVS_ACCOUNT_NAME`
 and `EVS_PASSWD` (Settings → Secrets and variables → Actions); without them the release

@@ -1,5 +1,4 @@
-# Every push to main builds Windows and Linux packages and publishes them as a GitHub
-# release. Work happens on dev; merging dev into main is what releases.
+# Every push to main builds the Windows package and publishes it as a GitHub release. Work happens on dev; merging dev into main is what releases.
 #
 # Version: major.minor from package.json, patch = this workflow's run number (v0.1.7).
 # Release notes: the subject line of every commit since the previous release.
@@ -35,10 +34,8 @@ jobs:
 
   build:
     needs: version
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    # Windows only for now: Linux builds come once they've been tested
+    runs-on: windows-latest
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -53,7 +50,6 @@ jobs:
       - run: npm ci
 
       - name: Log in to castlabs EVS
-        if: runner.os == 'Windows'
         shell: bash
         env:
           EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
@@ -72,19 +68,15 @@ jobs:
       - name: Build
         run: npm run dist -- --publish never
 
-      - name: Package Windows build
-        if: runner.os == 'Windows'
+      - name: Package
         shell: pwsh
         run: Compress-Archive -Path dist/win-unpacked/* -DestinationPath "dist/Yabloko-$env:VERSION-win-x64.zip"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }}
+          name: windows
           if-no-files-found: error
-          path: |
-            dist/*.zip
-            dist/*.AppImage
-            dist/*.tar.gz
+          path: dist/*.zip
 
   release:
     needs: [version, build]
