@@ -7,6 +7,9 @@ const { app } = require("electron");
 // skipOnSuggestLess: suggesting less of the playing song (hotkey or menu) also skips it
 // miniPlayer: show the mini player above the taskbar while the window is in the tray
 // miniPlayerPosition: where the mini player was dragged to ({ x, y }), null for the default
+// miniPlayerOnTop: the mini player stays above other windows
+// miniPlayerOnTopFullscreen: ...also above a full-screen app (game, video) on its screen
+// windowOnTop: the main window stays above other windows
 const DEFAULTS = {
   closeAction: "tray",
   startHidden: false,
@@ -14,6 +17,9 @@ const DEFAULTS = {
   skipOnSuggestLess: true,
   miniPlayer: true,
   miniPlayerPosition: null,
+  miniPlayerOnTop: true,
+  miniPlayerOnTopFullscreen: false,
+  windowOnTop: false,
 };
 
 const file = (name) => path.join(app.getPath("userData"), name);

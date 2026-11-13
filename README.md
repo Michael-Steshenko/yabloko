@@ -46,7 +46,15 @@ or minimized); right-clicking it opens a menu (the same items are in the window'
   stays up, showing "Nothing playing" with those buttons disabled. Clicking the song
   brings the window back; its × turns this setting off. Drag it (anywhere but
   its buttons) to move it; it stays where you drop it, also across restarts, until
-  _Reset settings_ puts it back by the clock
+  _Reset settings_ puts it back by the clock. Its ★ uses Apple Music's own accent color
+  (light blue in dark theme, blue in light theme), like the page's player
+- **Always on top:**
+  - _Mini player:_ on by default; off makes it an ordinary window other windows can cover
+  - _Mini player over full-screen apps:_ off by default, so while a full-screen app (a
+    game, a video, a browser in F11) is in front on its screen, the mini player steps
+    behind it and comes back on top after. Windows only: a small PowerShell helper checks
+    the foreground window twice a second, and runs only while the mini player is up
+  - _Main window:_ off by default
 - **Reset settings to defaults…:** asks for confirmation, then restores the defaults above
 - **Quit Yabloko**
 
@@ -196,7 +204,8 @@ the window.
 ### Linux: untested or not implemented
 
 - **Not implemented:** the taskbar badge (☆/★/👎) and the hover-preview buttons are
-  Windows-only taskbar features; on Linux they're skipped.
+  Windows-only taskbar features; on Linux they're skipped. So is the full-screen check:
+  on Linux the mini player stays on top whatever _Mini player over full-screen apps_ says.
 - **Untested: the mini player.** It's a transparent window, which needs a compositor;
   without one the pill may get a black box around it. On Wayland, apps can't place their
   own windows, so the default spot by the clock, dragging and the remembered position

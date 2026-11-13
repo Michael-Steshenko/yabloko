@@ -1,7 +1,7 @@
 const path = require("path");
 const { BrowserWindow, ipcMain, screen } = require("electron");
 
-// A small always-on-top pill, shown while the main window is in the tray. It starts
+// A small pill (always on top unless turned off, see setAlwaysOnTop), shown while the main window is in the tray. It starts
 // above the taskbar next to the clock and can be dragged elsewhere; where it was dropped
 // is saved (getPosition/savePosition). The window is larger than the pill by MARGIN on
 // each side, so the pill's shadow has room.
@@ -120,6 +120,12 @@ function createMiniPlayer({ onCommand, getPosition, savePosition }) {
     update(next) {
       state = next;
       win.webContents.send("mini-player-state", state);
+    },
+    // The display the pill is on, for the full-screen check
+    getDisplay: () => screen.getDisplayMatching(win.getBounds()),
+    isVisible: () => win.isVisible(),
+    setAlwaysOnTop(onTop) {
+      if (win.isAlwaysOnTop() !== onTop) win.setAlwaysOnTop(onTop);
     },
     setVisible(visible) {
       if (visible) {

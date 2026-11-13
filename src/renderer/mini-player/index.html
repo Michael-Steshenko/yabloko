@@ -16,7 +16,8 @@
         --hover: rgba(255, 255, 255, 0.1);
         --active: rgba(255, 255, 255, 0.16);
         --placeholder: #3a3a3c;
-        --accent: #fa2d48;
+        /* Apple Music's --keyAccentColor, which its player tints the favorite star with */
+        --star: #5ac8f5;
         --shadow: rgba(0, 0, 0, 0.35);
       }
       @media (prefers-color-scheme: light) {
@@ -28,6 +29,7 @@
           --hover: rgba(0, 0, 0, 0.06);
           --active: rgba(0, 0, 0, 0.11);
           --placeholder: #e5e5ea;
+          --star: #007aff;
           --shadow: rgba(0, 0, 0, 0.18);
         }
       }
@@ -136,7 +138,7 @@
         height: 22px;
       }
       #favorite.on {
-        color: var(--accent);
+        color: var(--star);
       }
       #favorite:not(.on),
       #suggest-less:not(.on) {

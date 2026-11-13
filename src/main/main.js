@@ -15,6 +15,7 @@ const { createServer } = require("./http-server");
 const { createNowPlaying } = require("./now-playing");
 const { watchRatingRequests } = require("./rating-requests");
 const { createMiniPlayer } = require("./mini-player");
+const { createFullscreenWatch } = require("./fullscreen-watch");
 const { updateTaskbar } = require("./taskbar");
 const {
   DEFAULTS,
@@ -96,8 +97,31 @@ function updateNowPlaying() {
       Boolean(settings.miniPlayer && mainWindow && !mainWindow.isVisible()),
     );
   }
+  updateAlwaysOnTop();
 }
 nowPlaying.onChange(updateNowPlaying);
+
+// Always on top, per the settings. Unless allowed over full-screen apps, the mini player
+// drops back while one is in front on its screen, and comes back on top after.
+const fullscreenWatch = createFullscreenWatch({
+  onChange: () => updateAlwaysOnTop(),
+});
+function updateAlwaysOnTop() {
+  if (!settings) return;
+  if (mainWindow && mainWindow.isAlwaysOnTop() !== settings.windowOnTop)
+    mainWindow.setAlwaysOnTop(settings.windowOnTop);
+  if (!miniPlayer) return;
+  const onTop = settings.miniPlayerOnTop;
+  const yieldsToFullscreen = onTop && !settings.miniPlayerOnTopFullscreen;
+  fullscreenWatch.setActive(yieldsToFullscreen && miniPlayer.isVisible());
+  miniPlayer.setAlwaysOnTop(
+    onTop &&
+      !(
+        yieldsToFullscreen &&
+        fullscreenWatch.isFullscreen(miniPlayer.getDisplay())
+      ),
+  );
+}
 
 async function resetSettings() {
   const options = {
@@ -167,6 +191,32 @@ function settingsMenuItems() {
       checked: settings.miniPlayer,
       click: (item) => setSetting("miniPlayer", item.checked),
     },
+    {
+      label: "Always on top",
+      submenu: [
+        {
+          label: "Mini player",
+          type: "checkbox",
+          checked: settings.miniPlayerOnTop,
+          click: (item) => setSetting("miniPlayerOnTop", item.checked),
+        },
+        {
+          label: "Mini player over full-screen apps",
+          type: "checkbox",
+          checked: settings.miniPlayerOnTopFullscreen,
+          // Only means something while the mini player is on top
+          enabled: settings.miniPlayerOnTop,
+          click: (item) =>
+            setSetting("miniPlayerOnTopFullscreen", item.checked),
+        },
+        {
+          label: "Main window",
+          type: "checkbox",
+          checked: settings.windowOnTop,
+          click: (item) => setSetting("windowOnTop", item.checked),
+        },
+      ],
+    },
     { label: "Reset settings to defaults…", click: resetSettings },
     { type: "separator" },
     { label: "Quit Yabloko", click: () => app.quit() },
@@ -179,7 +229,28 @@ function updateMenus() {
     Menu.buildFromTemplate([
       { label: "Yabloko", submenu: settingsMenuItems() },
       { role: "editMenu" },
-      { role: "viewMenu" },
+      {
+        // Electron's default View menu, except Zoom In: its default Ctrl+Plus only
+        // matches when the key types "+" (Shift+= or the numpad), so plain Ctrl+=, as
+        // in Chrome, did nothing. The hidden item keeps Ctrl+Shift+= working.
+        label: "View",
+        submenu: [
+          { role: "reload" },
+          { role: "forceReload" },
+          { role: "toggleDevTools" },
+          { type: "separator" },
+          { role: "resetZoom" },
+          { role: "zoomIn", accelerator: "CommandOrControl+=" },
+          {
+            role: "zoomIn",
+            accelerator: "CommandOrControl+Plus",
+            visible: false,
+          },
+          { role: "zoomOut" },
+          { type: "separator" },
+          { role: "togglefullscreen" },
+        ],
+      },
     ]),
   );
 }
@@ -366,5 +437,6 @@ if (!app.requestSingleInstanceLock()) {
   app.on("before-quit", () => {
     isQuitting = true;
     if (server) server.close();
+    fullscreenWatch.setActive(false);
   });
 }
