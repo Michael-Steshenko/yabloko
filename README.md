@@ -74,6 +74,32 @@ When run unpackaged, `src/renderer/musickit-actions.js` is re-read on every acti
 edits to it apply on the next request without a restart. Changes under `src/main/` still
 need one.
 
+## Development
+
+Work happens on the `dev` branch, which is the repository's default: commit and push
+there. `main` is the release branch: every push to it (normally merging `dev` into it)
+builds a new release.
+
+```
+git checkout main && git merge dev && git push && git checkout dev
+```
+
+### Releases
+
+`.github/workflows/release.yml` runs on every push to `main`. It builds the Windows
+package (VMP-signed) and the Linux AppImage and tar.gz, then publishes them as a GitHub
+release:
+
+- **Version:** major.minor from `package.json`, patch from the workflow's run number,
+  e.g. `v0.1.7`. Bump major or minor in `package.json` to move those on.
+- **Release notes:** the subject line of every commit since the previous release.
+- **Assets:** `Yabloko-<version>-win-x64.zip` (unzip and run `Yabloko.exe`),
+  `Yabloko-<version>.AppImage` and `Yabloko-<version>.tar.gz`.
+
+Windows signing logs in to castlabs EVS with the repository secrets `EVS_ACCOUNT_NAME`
+and `EVS_PASSWD` (Settings → Secrets and variables → Actions); without them the release
+fails. It can also be run by hand from the Actions tab (_Run workflow_).
+
 ## Control server
 
 Binds to loopback by default. Configurable via env vars:

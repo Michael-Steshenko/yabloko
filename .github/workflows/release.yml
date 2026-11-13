@@ -1,0 +1,126 @@
+# Every push to main builds Windows and Linux packages and publishes them as a GitHub
+# release. Work happens on dev; merging dev into main is what releases.
+#
+# Version: major.minor from package.json, patch = this workflow's run number (v0.1.7).
+# Release notes: the subject line of every commit since the previous release.
+#
+# Windows builds are VMP-signed with castlabs EVS, which needs the repository secrets
+# EVS_ACCOUNT_NAME and EVS_PASSWD (the EVS account used for `npm run sign:dev`).
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One release at a time, in push order
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          base=$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")
+          echo "version=$base.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Set version
+        shell: bash
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+      - run: npm ci
+
+      - name: Log in to castlabs EVS
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+          EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
+          EVS_NO_ASK: "1"
+        run: |
+          if [ -z "$EVS_ACCOUNT_NAME" ] || [ -z "$EVS_PASSWD" ]; then
+            echo "::error::Set the EVS_ACCOUNT_NAME and EVS_PASSWD repository secrets"
+            exit 1
+          fi
+          python -m pip install --upgrade castlabs-evs
+          python -m castlabs_evs.account reauth
+
+      # electron-builder publishes on its own when it sees a GitHub token; the release
+      # job below does that instead
+      - name: Build
+        run: npm run dist -- --publish never
+
+      - name: Package Windows build
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/win-unpacked/* -DestinationPath "dist/Yabloko-$env:VERSION-win-x64.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}
+          if-no-files-found: error
+          path: |
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.tar.gz
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # all tags and history, for the release notes
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Write release notes
+        run: |
+          previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          range=${previous:+$previous..}HEAD
+          {
+            echo "## Changes"
+            echo
+            git log --no-merges --format='- %s' "$range"
+            if [ -n "$previous" ]; then
+              echo
+              echo "**Full changelog:** https://github.com/${{ github.repository }}/compare/$previous...v$VERSION"
+            fi
+          } > notes.md
+          cat notes.md
+
+      - name: Publish release
+        run: |
+          gh release create "v$VERSION" artifacts/* \
+            --target "${{ github.sha }}" \
+            --title "Yabloko $VERSION" \
+            --notes-file notes.md
