@@ -144,7 +144,10 @@
       #suggest-less:not(.on) {
         color: var(--muted);
       }
-      #favorite:not(.on):hover,
+      /* Like the page's player: the empty star turns the accent color on hover */
+      #favorite:not(.on):hover {
+        color: var(--star);
+      }
       #suggest-less:not(.on):hover {
         color: var(--text);
       }
